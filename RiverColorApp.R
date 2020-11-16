@@ -19,19 +19,19 @@ library(shinybusy)
 library(shinyjs)
 
 ### load data
-flowline<- read_rds("D:/Dropbox/projects/RiverColorShiny/out/flowline_shiny.rds")
+flowline<- read_rds("out/flowline_shiny.rds")
 
-trend_annual <- read_rds("D:/Dropbox/projects/RiverColorShiny/out/trend_shiny.rds")
+trend_annual <- read_rds("out/trend_shiny.rds")
 
-sum_ID <- read_rds("D:/Dropbox/projects/RiverColorShiny/out/sum_shiny.rds")
+sum_ID <- read_rds("out/sum_shiny.rds")
 
-sum_ID_year <- read_rds("D:/Dropbox/projects/RiverColorShiny/out/sum_year_shiny.rds")
+sum_ID_year <- read_rds("out/sum_year_shiny.rds")
 
-sum_ID_month <- read_rds("D:/Dropbox/projects/RiverColorShiny/out/sum_month_shiny.rds")
+sum_ID_month <- read_rds("out/sum_month_shiny.rds")
 
-clust <- read_rds("D:/Dropbox/projects/RiverColorShiny/out/clust_shiny.rds")
+clust <- read_rds("out/clust_shiny.rds")
 
-riverSR <- read_rds("D:/Dropbox/projects/RiverColorShiny/out/riverSR_shiny.rds")
+riverSR <- read_rds("out/riverSR_shiny.rds")
 
 
 ################################################
