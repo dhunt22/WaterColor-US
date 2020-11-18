@@ -105,7 +105,7 @@ server <- function(input, output, session) {
 
       showModal(modalDialog(
         footer = modalButton("Go"),
-        h1('Visualizing the color of rivers across'),
+        h1('Visualizing the color of rivers across the USA'),
         tags$p(
           tags$br(),
           tags$blockquote(
