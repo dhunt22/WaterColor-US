@@ -60,6 +60,18 @@ riverSR <- read_rds("out/riverSR_shiny.rds")
 # Define UI for application 
 ui <- fluidPage(
    
+  tags$head(tags$style(
+    HTML(
+      '.modal.in .modal-dialog{
+        width:100%;
+        height:1000px;
+        margin:0px;
+      }
+      .modal-content{
+        width:100%;
+        height:100%;
+      }'
+    ))),
    # Application title
    titlePanel("The Color of US Rivers"),
 
@@ -73,7 +85,7 @@ ui <- fluidPage(
              leafletOutput(outputId = "map",  height = 600)),
       
    # plot long-term trend, seasonal patternd, and colro distribution when click on a river
-      column(4, actionButton(inputId = "help_button", "", icon = icon("question-circle")),
+      column(4, actionButton(inputId = "help_button", "Info", icon = icon("question-circle")),
           align = "right"),
    
       column(4, 
