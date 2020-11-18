@@ -67,10 +67,9 @@ ui <- fluidPage(
    # Show maps
     fluidRow(
       column(8, 
-             selectInput("mapInput", "Map type", 
-                         choices = c("Modal Color (nm)", "Trends", "Seasonality")),
+             selectInput("mapInput", "Select Map Data", c("Modal Color (nm)", "Trends", "Seasonality")),
               
-             #leafglOutput not working for polylines. IF change back to leaflet, add progress bar      
+             #leafglOutput not working for polylines.   
              leafletOutput(outputId = "map",  height = 600)),
       
    # plot long-term trend, seasonal patternd, and colro distribution when click on a river
@@ -103,7 +102,7 @@ server <- function(input, output, session) {
             intergrative measure of water and one of the oldest metrics of water quality.
             We can also measure water color using satellites such as Landsat. In a recent
             publication in Geophysical Research Letters, we used the Landsat record from 1984-2018
-            to measure to color of all large rivers (> 60 meters wide) in the continental USA.
+            to measure the color of all large rivers (> 60 meters wide) in the continental USA.
             We created a database called River Surface Reflectance (RiverSR), publicly available see link below,
             and this interactive website visualizes the color of rivers over space and time."),
           
@@ -115,8 +114,8 @@ server <- function(input, output, session) {
                       color distribution over time quantified as dominant wavelength on the visible spectrum (nm)."),
               tags$li(
                 "A map of the dominant seasonal pattern in river color, and by clicking on a river, a graph of the mean seasonal pattern.
-                Summer red-shift means river color is most towards the red end of the visible spectrum in
-                (yellower) in the summer and spring red-shifted means river color is yellower in the spring."),
+                Summer red-shift means river color is closer to the red end of the visible spectrum, or
+                yellower, in the summer and spring red-shifted means river color is yellower in the spring."),
               tags$li(
                 "A map of the long-term trend, and by clicking on a river, the mean annual trend (colored line) and full data (gray circles) for that 
                 river. Red-shifted means the river is trending towards the red end of the spectrum over time.
@@ -254,12 +253,13 @@ pal <- reactive({
                                  "Map data:", map_out()$trend, "<br>",
                                  "Reach ID:", map_out()$ID, "<br>",
                                  "Stream Order:", map_out()$StrmOrd))  %>%
+     ## if using leafgl
      # leafgl::addGlPolylines(data = map_out(),
-      #               color = ~pal()(trend),
-      #               layerId = ~ID,
-      #               opacity=1,
-      #               weight=2
-       #              ) %>%
+     #               color = ~pal()(trend),
+     #               layerId = ~ID,
+     #               opacity=1,
+     #               weight=2
+     #              ) %>%
        addLegend("bottomleft", pal=pal(), values = ~trend, title="", opacity = 1)
   })
   
