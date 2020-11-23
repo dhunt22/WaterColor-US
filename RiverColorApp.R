@@ -1,26 +1,29 @@
 
+library(leafgl)
+library(sf)
+library(leaflet)
 library(tidyverse)
 library(viridis)
-library(sf)
-library(rgdal)
-library(maps)
 library(magrittr)
-library(tmap)
-library(lubridate)
-library(mapview)
+library(readr)
 library(ggthemes)
-library(leaflet)
-library(tidyr)
-library(leafpop)
-library(scales)
 library(shiny)
-library(shinyalert)
-library(shinybusy)
-library(shinyjs)
-library(leafgl)
 
+#devtools::install_github("r-spatial/leafgl")
+
+#library(tidyr)
+#library(leafpop)
+#library(feather)
+#library(tmap)
+#library(lubridate)
+#library(mapview)
+#library(maps)
+#library(shinyalert)
+#library(shinybusy)
+#library(shinyjs)
+#library(rgdal)
 ### load data
-flowline<- read_rds("out/flowline_shiny.rds")  
+flowline<- read_rds("out/flowline_shiny2.rds")  
 
 ## If using leafgl need to cast to linestring
 #flowline <- st_cast(flowline,"LINESTRING")
@@ -47,14 +50,21 @@ riverSR <- read_rds("out/riverSR_shiny.rds")
 #         #addLayersControl(baseGroups = c("Esri.WorldGrayCanvas", "DarkMatter (CartoDB)", "Esri.WorldTopoMap",
 #         #                                          "Esri.WorldImagery"),
 #         #               options = layersControlOptions(collapsed = TRUE, autoZIndex = T)) %>%
-#       setView(zoom=3.5, lat=42, lng=-98) %>%
-#        addGlPolyline(data = flowline,
-#                       #color="blue",
-#                       opacity=1
-#                       #weight=2
+#      # setView(zoom=3.5, lat=42, lng=-98) %>%
+#       leafgl::addGlPolylines(data = flowline,
+#                       color="blue",
+#                       opacity=1,
+#                       weight=4
 #                          )
-
-
+# 
+# 
+# storms = st_as_sf(atlStorms2005)
+# 
+# leaflet() %>%
+#   addTiles() %>%
+#   #addProviderTiles(provider = providers$CartoDB.Positron) %>%
+#   #addPolylines(data=storms)
+#   addPolylines(data = flowline)
 
 ################################################
 # Define UI for application 
@@ -81,7 +91,7 @@ ui <- fluidPage(
       column(8, 
              selectInput("mapInput", "Select Map Data", c("Modal Color (nm)", "Trends", "Seasonality")),
               
-             #leafglOutput not working for polylines.   
+             #leafglOutput not working    
              leafletOutput(outputId = "map",  height = 600)),
       
    # plot long-term trend, seasonal patternd, and colro distribution when click on a river
@@ -114,22 +124,21 @@ server <- function(input, output, session) {
             intergrative measure of water and one of the oldest metrics of water quality.
             We can also measure water color using satellites such as Landsat. In a recent
             publication in Geophysical Research Letters, we used the Landsat record from 1984-2018
-            to measure the color of all large rivers (> 60 meters wide) in the continental USA.
-            We created a database called River Surface Reflectance (RiverSR), publicly available see link below,
-            and this interactive website visualizes the color of rivers over space and time."),
+            to measure the color of all large rivers  in the continental USA.
+            This website provides an interactive visualization of the color of rivers over space and time."),
           
           tags$br(),
           tags$blockquote(
             tags$b("By clicking on different rivers, you can visualize three main points:"),
             tags$ol(
-              tags$li("A map of the most common color, or modal color, and by clicking on a river, the full 
+              tags$li("A map of the most common color, or modal color. Click on a river to show the full 
                       color distribution over time quantified as dominant wavelength on the visible spectrum (nm)."),
               tags$li(
-                "A map of the dominant seasonal pattern in river color, and by clicking on a river, a graph of the mean seasonal pattern.
+                "A map of the dominant seasonal pattern in river color. Click on a river to show a graph of the mean seasonal pattern.
                 Summer red-shift means river color is closer to the red end of the visible spectrum, or
                 yellower, in the summer and spring red-shifted means river color is yellower in the spring."),
               tags$li(
-                "A map of the long-term trend, and by clicking on a river, the mean annual trend (colored line) and full data (gray circles) for that 
+                "A map of the long-term trend. Click on a river to show the mean annual trend (colored line) and full data (gray circles) for that 
                 river. Red-shifted means the river is trending towards the red end of the spectrum over time.
                 Blue-shifted means the river is trending towards the blue end of the spectrum over time. Steady 
                 means there is little change in color over time. Variable means there is no trend and river color changes frequently."),
@@ -141,7 +150,7 @@ server <- function(input, output, session) {
           tags$i(
             tags$p(
               "Authors: John Gardner, Xiao Yang, Simon Topp, Matthew Ross, Elizabeth Altenau, Tamlin Pavelsky"),
-            p("Paper citation: Gardner J., Yang X., Topp S., Ross M., Altenau E., Pavelsky T. (In Press). Geophysical Research Letters"),
+            p("Paper citation: Gardner J., Yang X., Topp S., Ross M., Altenau E., Pavelsky T. 2020. The color of rivers. Geophysical Research Letters"),
             p("Contact: gardner.john@pitt.edu")
             ),
           tags$b(
@@ -158,16 +167,22 @@ server <- function(input, output, session) {
             )),
          
           #insert link to paper later
-            tags$ol(
-            tags$i(
-              tags$a(href = "", "Color of Rivers. GRL. 2020"),
-              br()
-              )),
+            # tags$ol(
+            # tags$i(
+            #   tags$a(href = "", "Color of Rivers. GRL. 2020"),
+            #   br()
+            #   )),
           #insert link to paper later
           tags$ol(
             tags$i(
-              tags$a(href = "https://www.epa.gov/waterdata/get-nhdplus-national-hydrography-dataset-plus-data", "National Hydrography Dataset (NHDPlusV2"),
+              tags$a(href = "https://www.epa.gov/waterdata/get-nhdplus-national-hydrography-dataset-plus-data", "National Hydrography Dataset (NHDPlusV2)"),
+              br() )),
+              
+          tags$ol(
+            tags$i(
+              tags$p("NOTE: River geometries have been simplified and switching between maps is currently slow to load."),
               br()
+
             ))
           )
         )
@@ -186,30 +201,44 @@ map_out <- reactive({
 
     return(flowline %>%
              inner_join(sum_ID,  by="ID") %>%
-             mutate(trend = dw_mode1))
+             mutate(trend = dw_mode1)
+
+      )
 
   } else if(x == "Modal Color (nm)") {
 
     return(flowline %>%
-             inner_join(sum_ID,  by="ID") %>%
-             mutate(trend = dw_mode1))
+           inner_join(sum_ID,  by="ID") %>%
+           mutate(trend = dw_mode1))
+
 
   } else if(x == "Trends") {
 
     return(flowline %>%
       left_join(trend_annual,  by="ID") %>%
-        mutate(trend = ifelse(is.na(trend), "w/o enough data", trend)))
+        mutate(trend = ifelse(is.na(trend), "w/o enough data", trend))
+
+      )
 
   } else if(x == "Seasonality") {
 
     return(flowline %>%
       left_join(clust, by="ID") %>%
-        mutate(trend = ifelse(is.na(trend), "w/o enough data", trend)))
+        mutate(trend = ifelse(is.na(trend), "w/o enough data", trend))
+  )
   }
   })
 
 
-# make color palette reactive for each map
+# map_out <- reactive({
+#   flowline %>%
+#   left_join(out(), by = setNames("ID"= "ID")) %>%
+#   mutate(trend = ifelse(is.na(trend), "w/o enough data", trend))
+# })
+
+
+
+# make color palette reactive for each map. change back to map_out if neeed
 pal <- reactive({
 
   x <- input$mapInput
@@ -243,6 +272,7 @@ pal <- reactive({
   }
 })
 
+
 # plot map
   output$map <- renderLeaflet({
        leaflet(map_out()) %>%
@@ -265,6 +295,7 @@ pal <- reactive({
                                  "Map data:", map_out()$trend, "<br>",
                                  "Reach ID:", map_out()$ID, "<br>",
                                  "Stream Order:", map_out()$StrmOrd))  %>%
+                  
      ## if using leafgl
      # leafgl::addGlPolylines(data = map_out(),
      #               color = ~pal()(trend),
