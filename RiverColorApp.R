@@ -4,10 +4,13 @@ library(sf)
 library(leaflet)
 library(tidyverse)
 library(viridis)
-library(magrittr)
 library(readr)
 library(ggthemes)
 library(shiny)
+
+#library(magrittr)
+#library(shinybusy)
+#library(shinyjs)
 
 #devtools::install_github("r-spatial/leafgl")
 
@@ -19,11 +22,10 @@ library(shiny)
 #library(mapview)
 #library(maps)
 #library(shinyalert)
-#library(shinybusy)
-#library(shinyjs)
+
 #library(rgdal)
 ### load data
-flowline<- read_rds("out/flowline_shiny2.rds")  
+flowline<- read_rds("out/flowline_shiny.rds")  
 
 ## If using leafgl need to cast to linestring
 #flowline <- st_cast(flowline,"LINESTRING")
@@ -69,6 +71,27 @@ riverSR <- read_rds("out/riverSR_shiny.rds")
 ################################################
 # Define UI for application 
 ui <- fluidPage(
+  
+  tags$head(
+    HTML(
+      "
+          <script>
+          var socket_timeout_interval
+          var n = 0
+          $(document).on('shiny:connected', function(event) {
+          socket_timeout_interval = setInterval(function(){
+          Shiny.onInputChange('count', n++)
+          }, 15000)
+          });
+          $(document).on('shiny:disconnected', function(event) {
+          clearInterval(socket_timeout_interval)
+          });
+          </script>
+          "
+    )
+  ),
+  
+  
    
   tags$head(tags$style(
     HTML(
@@ -102,13 +125,22 @@ ui <- fluidPage(
            
            plotOutput("plot_trend", height = 200),
            plotOutput("plot_season",   height = 200),
-           plotOutput("plot_hist",  height = 200))
+           plotOutput("plot_hist",  height = 200)),
+   
+   textOutput("keepAlive")
+   
    )
 )
 ##############################################
 # Define server logic
 server <- function(input, output, session) {
 
+  output$keepAlive <- renderText({
+    req(input$count)
+    paste("keep alive ", input$count)
+  })
+  
+  
   observe({
     if (!is.null(input$help_button) || LAUNCHING) {
       LAUNCHING <<- FALSE
@@ -120,8 +152,8 @@ server <- function(input, output, session) {
           tags$br(),
           tags$blockquote(
             "Rivers can appear as many different colors such as greens, blues, browns,
-            and yellows. Water color, as perceived by the human eye, is an intuitive and
-            intergrative measure of water and one of the oldest metrics of water quality.
+            and yellows. Water color, as perceived by the human eye, is intuitive,
+            intergrative, and one of the oldest metrics of water quality.
             We can also measure water color using satellites such as Landsat. In a recent
             publication in Geophysical Research Letters, we used the Landsat record from 1984-2018
             to measure the color of all large rivers  in the continental USA.
@@ -138,8 +170,8 @@ server <- function(input, output, session) {
                 Summer red-shift means river color is closer to the red end of the visible spectrum, or
                 yellower, in the summer and spring red-shifted means river color is yellower in the spring."),
               tags$li(
-                "A map of the long-term trend. Click on a river to show the mean annual trend (colored line) and full data (gray circles) for that 
-                river. Red-shifted means the river is trending towards the red end of the spectrum over time.
+                "A map of the long-term trend. Click on a river to show the mean annual trend (colored line) and full data (gray circles).
+                Red-shifted means the river is trending towards the red end of the spectrum over time.
                 Blue-shifted means the river is trending towards the blue end of the spectrum over time. Steady 
                 means there is little change in color over time. Variable means there is no trend and river color changes frequently."),
               
@@ -276,6 +308,7 @@ pal <- reactive({
 # plot map
   output$map <- renderLeaflet({
        leaflet(map_out()) %>%
+       clearShapes() %>%
        addProviderTiles(providers$Esri.WorldGrayCanvas, group = "Esri.WorldGrayCanvas") %>%
        addProviderTiles(providers$CartoDB.DarkMatter, group = "DarkMatter (CartoDB)") %>%
        addProviderTiles(providers$Esri.WorldTopoMap, group = "Esri.WorldTopoMap") %>%
