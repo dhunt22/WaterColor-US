@@ -1,72 +1,22 @@
 
-library(leafgl)
+library(shiny)
 library(sf)
 library(leaflet)
 library(tidyverse)
 library(viridis)
-library(readr)
 library(ggthemes)
-library(shiny)
+library(leafgl)
 
-#library(magrittr)
-#library(shinybusy)
-#library(shinyjs)
-
-#devtools::install_github("r-spatial/leafgl")
-
-#library(tidyr)
-#library(leafpop)
-#library(feather)
-#library(tmap)
-#library(lubridate)
-#library(mapview)
-#library(maps)
-#library(shinyalert)
-
-#library(rgdal)
 ### load data
-flowline<- read_rds("out/flowline_shiny.rds")  
+flowline<- readRDS("out/flowline_shiny.rds")  %>%
+  st_cast("LINESTRING")
 
-## If using leafgl need to cast to linestring
-#flowline <- st_cast(flowline,"LINESTRING")
-
-trend_annual <- read_rds("out/trend_shiny.rds")
-
-sum_ID <- read_rds("out/sum_shiny.rds")
-
-sum_ID_year <- read_rds("out/sum_year_shiny.rds")
-
-sum_ID_month <- read_rds("out/sum_month_shiny.rds")
-
-clust <- read_rds("out/clust_shiny.rds")
-
-riverSR <- read_rds("out/riverSR_shiny.rds")
-
-### try playing with leafgl. Not working
-# leaflet() %>%
-#   addTiles() %>%
-#         #addProviderTiles(providers$Esri.WorldGrayCanvas, group = "Esri.WorldGrayCanvas") %>%
-#         #addProviderTiles(providers$CartoDB.DarkMatter, group = "DarkMatter (CartoDB)") %>%
-#         #addProviderTiles(providers$Esri.WorldTopoMap, group = "Esri.WorldTopoMap") %>%
-#         #addProviderTiles(providers$Esri.WorldImagery, group = "Esri.WorldImagery") %>%
-#         #addLayersControl(baseGroups = c("Esri.WorldGrayCanvas", "DarkMatter (CartoDB)", "Esri.WorldTopoMap",
-#         #                                          "Esri.WorldImagery"),
-#         #               options = layersControlOptions(collapsed = TRUE, autoZIndex = T)) %>%
-#      # setView(zoom=3.5, lat=42, lng=-98) %>%
-#       leafgl::addGlPolylines(data = flowline,
-#                       color="blue",
-#                       opacity=1,
-#                       weight=4
-#                          )
-# 
-# 
-# storms = st_as_sf(atlStorms2005)
-# 
-# leaflet() %>%
-#   addTiles() %>%
-#   #addProviderTiles(provider = providers$CartoDB.Positron) %>%
-#   #addPolylines(data=storms)
-#   addPolylines(data = flowline)
+trend_annual <- readRDS("out/trend_shiny.rds")
+sum_ID <- readRDS("out/sum_shiny.rds")
+sum_ID_year <- readRDS("out/sum_year_shiny.rds")
+sum_ID_month <- readRDS("out/sum_month_shiny.rds")
+clust <- readRDS("out/clust_shiny.rds")
+riverSR <- readRDS("out/riverSR_shiny.rds")
 
 ################################################
 # Define UI for application 
@@ -90,8 +40,6 @@ ui <- fluidPage(
           "
     )
   ),
-  
-  
    
   tags$head(tags$style(
     HTML(
@@ -107,7 +55,6 @@ ui <- fluidPage(
     ))),
    # Application title
    titlePanel("The Color of US Rivers"),
-
    
    # Show maps
     fluidRow(
@@ -115,10 +62,13 @@ ui <- fluidPage(
              selectInput("mapInput", "Select Map Data", c("Modal Color (nm)", "Trends", "Seasonality")),
               
              #leafglOutput not working    
-             leafletOutput(outputId = "map",  height = 600)),
+             leafglOutput(outputId = "map",  height = 600),
+              
+             mainPanel("Click on a river reach to change plots on the right")),
       
    # plot long-term trend, seasonal patternd, and colro distribution when click on a river
-      column(4, actionButton(inputId = "help_button", "Info", icon = icon("question-circle")),
+      column(4, 
+             actionButton(inputId = "help_button", "Info", icon = icon("question-circle")),
           align = "right"),
    
       column(4, 
@@ -212,7 +162,7 @@ server <- function(input, output, session) {
               
           tags$ol(
             tags$i(
-              tags$p("NOTE: River geometries have been simplified and switching between maps is currently slow to load."),
+              tags$p("NOTE: River geometries have been simplified."),
               br()
 
             ))
@@ -261,15 +211,6 @@ map_out <- reactive({
   }
   })
 
-
-# map_out <- reactive({
-#   flowline %>%
-#   left_join(out(), by = setNames("ID"= "ID")) %>%
-#   mutate(trend = ifelse(is.na(trend), "w/o enough data", trend))
-# })
-
-
-
 # make color palette reactive for each map. change back to map_out if neeed
 pal <- reactive({
 
@@ -293,10 +234,6 @@ pal <- reactive({
       palette = c("green3", "gold2", "darkmagenta","gray50", "grey90"),
       domain = map_out()$trend)
 
-   #  pal<- colorFactor(
-   #    palette = c("turquoise4", "orangered3", "darkmagenta","gray50", "grey90"),
-    #   domain = map_out()$trend)
-
   } else if(x == "Seasonality") {
     pal <- colorFactor(
       palette = c("green3","darkmagenta","darkorange1", "grey90"),
@@ -304,11 +241,10 @@ pal <- reactive({
   }
 })
 
-
 # plot map
   output$map <- renderLeaflet({
        leaflet(map_out()) %>%
-       clearShapes() %>%
+       #clearShapes() %>%
        addProviderTiles(providers$Esri.WorldGrayCanvas, group = "Esri.WorldGrayCanvas") %>%
        addProviderTiles(providers$CartoDB.DarkMatter, group = "DarkMatter (CartoDB)") %>%
        addProviderTiles(providers$Esri.WorldTopoMap, group = "Esri.WorldTopoMap") %>%
@@ -317,25 +253,18 @@ pal <- reactive({
                                        "Esri.WorldImagery"),
                         options = layersControlOptions(collapsed = TRUE, autoZIndex = T)) %>%
       setView(zoom=3.5, lat=42, lng=-98) %>%
-      addPolylines(data=map_out(),
+      addGlPolylines(data=map_out(),
                     color = ~pal()(trend),
                     layerId = ~ID,
                    opacity=1,
-                    weight=2,
-                   highlightOptions = highlightOptions(color = "white", weight = 4,
-                                                       bringToFront = TRUE),
+                    weight=1, 
+                 #  highlightOptions = highlightOptions(color = "white", weight = 4,
+                  #                                     bringToFront = TRUE),
                    popup = paste("River name:", map_out()$GNIS_NA, "<br>",
                                  "Map data:", map_out()$trend, "<br>",
                                  "Reach ID:", map_out()$ID, "<br>",
                                  "Stream Order:", map_out()$StrmOrd))  %>%
                   
-     ## if using leafgl
-     # leafgl::addGlPolylines(data = map_out(),
-     #               color = ~pal()(trend),
-     #               layerId = ~ID,
-     #               opacity=1,
-     #               weight=2
-     #              ) %>%
        addLegend("bottomleft", pal=pal(), values = ~trend, title="", opacity = 1)
   })
   
@@ -345,7 +274,7 @@ pal <- reactive({
 # trends
   ggplot_trend <- reactive({
     
-    site <- input$map_shape_click$id
+    site <- input$map_glify_click$id
     
     # give plot some default data to plot on opening
     if (is.null(site)) {
@@ -359,7 +288,7 @@ pal <- reactive({
 # seasonal pattern
   ggplot_season <- reactive({
     
-    site <- input$map_shape_click$id
+    site <- input$map_glify_click$id
     
     # give plot some default data to plot on opening
     if (is.null(site)) {
@@ -373,7 +302,7 @@ pal <- reactive({
 # full color distribution 
   ggplot_hist <- reactive({
     
-    site <- input$map_shape_click$id
+    site <- input$map_glify_click$id
     
     # give plot some default data to plot on opening
     if (is.null(site)) {
@@ -390,9 +319,6 @@ pal <- reactive({
        cols <- c("Blue-shifted" = "green3", "Red-shifted"= "gold2", "Steady"="darkmagenta", 
                  "Variable"= "gray50", "w/o enough data" ="grey90")
 
-      # cols <- c("Blue-shifted" = "turquoise4", "Red-shifted"= "orangered3", "Steady"="darkmagenta", 
-       #          "Variable"= "gray50", "w/o enough data" ="grey90")
-       
        ggplot()+
          geom_point(data= ggplot_hist(),
                     aes(x=date, y=dw), color="lightgrey", alpha=0.5, size=1)  +
@@ -451,87 +377,5 @@ pal <- reactive({
 shinyApp(ui = ui, server = server)
 
 ###############################################################################
-#### MUNGE CODE
-
-# output$map <- renderLeaflet({
-#       leaflet() %>%
-#       addProviderTiles(providers$Esri.WorldGrayCanvas, group = "Esri.WorldGrayCanvas") %>%
-#       addProviderTiles(providers$CartoDB.DarkMatter, group = "DarkMatter (CartoDB)") %>%
-#       addProviderTiles(providers$Esri.WorldTopoMap, group = "Esri.WorldTopoMap") %>%
-#       addProviderTiles(providers$Esri.WorldImagery, group = "Esri.WorldImagery") %>%
-#       addLayersControl(baseGroups = c("Esri.WorldGrayCanvas", "DarkMatter (CartoDB)", "Esri.WorldTopoMap", 
-#                                         "Esri.WorldImagery"),
-#                          options = layersControlOptions(collapsed = TRUE, autoZIndex = T)) %>%
-#       setView(zoom=3.5, lat=42, lng=-98) 
-#   #        addPolylines(data=map_out(),
-#   #                     color = ~pal()(trend),
-#   #                     layerId = ~ID,
-#   #                     opacity=1,
-#   #                     weight=2)  %>%
-#   #        addLegend("bottomleft", pal=pal(), values = ~trend, title="", opacity = 1)
-#      })
-# 
-#   
-#   
-#    
-#    
-#    # reactively create data for drop-down menu for selecting map data
-#    #NOTE: figure out how to make this faster, maybe leafletProxy
-# observeEvent(input$mapInput, {
-#    
-#    
-#    if (is.null(input$mapInput)) {
-#      
-#      map_flow <- flowline %>%
-#             inner_join(sum_ID,  by="ID") %>%
-#             mutate(trend = dw_mode1)
-#      
-#      pal <- colorNumeric(
-#             palette = "viridis",
-#             domain = map_flow$trend)
-#      
-#    } else if(input$mapInput == "Modal Color (nm)") {
-#      
-#      map_flow <- flowline %>%
-#               inner_join(sum_ID,  by="ID") %>%
-#               mutate(trend = dw_mode1) 
-#      
-#      pal <- colorNumeric(
-#        palette = "viridis",
-#        domain = map_flow$trend)
-#      
-#    } else if(input$mapInput == "Trends") {
-#    
-#      map_flow <- flowline %>%
-#        left_join(trend_annual,  by="ID") %>%
-#         mutate(trend = ifelse(is.na(trend), "w/o enough data", trend))
-#        
-#      pal <- colorFactor(
-#        palette = c("green3", "gold2", "darkmagenta","gray50", "grey90"),
-#        domain = map_flow$trend)
-#      
-#    } else if(input$mapInput == "Seasonality") {
-#      
-#      map_flow <- flowline %>%
-#        left_join(clust, by="ID") %>%
-#        mutate(trend = ifelse(is.na(trend), "w/o enough data", trend))
-#      
-#      pal <- colorFactor(
-#        palette = c("green3","darkmagenta","darkorange1", "grey90"),
-#        domain = map_flow$trend)
-#    }
-#   
-#   
-#   leafletProxy("map", data=map_flow) %>%
-#     clearShapes() %>%
-#     addPolylines(data=map_flow,
-#                  color = ~pal(trend),
-#                  layerId = ~ID,
-#                  opacity=1,
-#                  weight=2)  %>%
-#     addLegend("bottomleft", pal=pal, values = ~trend, title="", opacity = 1)
-#   
-#    })
-#       
 
 
