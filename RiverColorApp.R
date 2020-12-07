@@ -132,7 +132,7 @@ server <- function(input, output, session) {
           tags$i(
             tags$p(
               "Authors: John Gardner, Xiao Yang, Simon Topp, Matthew Ross, Elizabeth Altenau, Tamlin Pavelsky"),
-            p("Paper citation: Gardner J., Yang X., Topp S., Ross M., Altenau E., Pavelsky T. 2020. The color of rivers. Geophysical Research Letters"),
+            p("Paper citation: Gardner J., Yang X., Topp S., Ross M., Altenau E., Pavelsky T. 2020. The Color of Rivers. Geophysical Research Letters"),
             p("Contact: gardner.john@pitt.edu")
             ),
           tags$b(
@@ -144,17 +144,17 @@ server <- function(input, output, session) {
           tags$b("Links"),
           tags$ol(
             tags$i(
-              tags$a(href = "https://zenodo.org/record/3838387#.X7WCH4hKiUk", " River Surface Reflectance Database (RiverSR)"),
+              tags$a(href = "https://zenodo.org/record/4304567#.X86aQGhKiUk", " River Surface Reflectance Database (RiverSR)"),
               br()
             )),
          
           #insert link to paper later
-            # tags$ol(
-            # tags$i(
-            #   tags$a(href = "", "Color of Rivers. GRL. 2020"),
-            #   br()
-            #   )),
-          #insert link to paper later
+             tags$ol(
+             tags$i(
+               tags$a(href = "https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2020GL088946", "Color of Rivers. GRL. 2020"),
+               br()
+               )),
+          #insert link
           tags$ol(
             tags$i(
               tags$a(href = "https://www.epa.gov/waterdata/get-nhdplus-national-hydrography-dataset-plus-data", "National Hydrography Dataset (NHDPlusV2)"),
@@ -175,7 +175,7 @@ server <- function(input, output, session) {
 
 # reactively create data for drop-down menu for selecting map data
   #NOTE: figure out how to make this faster with leafgl
-map_out <- reactive({
+  map_out <- reactive({
 
   x <- input$mapInput
 
