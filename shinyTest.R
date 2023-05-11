@@ -61,19 +61,17 @@ map = mapview(inputSF_filter,
 map
 
 
-
+# Example timeseries plot of Horsetooth
 inputSF_tooth <- limno_state_color %>% 
   filter(Hylak_id == 112043)
 
+min_fui <- min(inputSF_tooth$fui_value, na.rm = TRUE)
+max_fui <- max(inputSF_tooth$fui_value, na.rm = TRUE)
+
 ggplot(inputSF_tooth, aes(x = year, y = fui_value, fill = fui_value)) + 
   geom_col() + 
-  scale_fill_gradientn(colours = fui_colors[7:9]) +
+  scale_fill_gradientn(colours = fui_colors[min_fui:max_fui]) +
   labs(title = "Horsetooth Forel-Ule Index",
        x = "Year",
        y = "Fui_value",
        fill = "Value")
-
-
-
-
-
