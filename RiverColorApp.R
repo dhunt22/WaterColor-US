@@ -72,10 +72,14 @@ ui <- fluidPage(
           align = "right"),
    
       column(4, 
+<<<<<<< HEAD
              ##* Make a a new tab for choosing river or lake plots
              selectInput("plotTypeInput", "Select Plots", c("Rivers", "Lakes")),
              
             ##* Move these to a separate rendering spot 
+=======
+           
+>>>>>>> 3516fc066dcbb03352751a62079ae2a58f642b53
            plotOutput("plot_trend", height = 200),
            plotOutput("plot_season",   height = 200),
            plotOutput("plot_hist",  height = 200)),
@@ -185,8 +189,13 @@ server <- function(input, output, session) {
   if (is.null(x)) {
 
     return(flowline %>%
+<<<<<<< HEAD
             inner_join(sum_ID,  by="ID") %>%
             mutate(trend = dw_mode1)
+=======
+             inner_join(sum_ID,  by="ID") %>%
+             mutate(trend = dw_mode1)
+>>>>>>> 3516fc066dcbb03352751a62079ae2a58f642b53
 
       )
 
@@ -200,23 +209,37 @@ server <- function(input, output, session) {
   } else if(x == "Trends") {
 
     return(flowline %>%
+<<<<<<< HEAD
           left_join(trend_annual,  by="ID") %>%
           mutate(trend = ifelse(is.na(trend), "w/o enough data", trend))
+=======
+      left_join(trend_annual,  by="ID") %>%
+        mutate(trend = ifelse(is.na(trend), "w/o enough data", trend))
+>>>>>>> 3516fc066dcbb03352751a62079ae2a58f642b53
 
       )
 
   } else if(x == "Seasonality") {
 
     return(flowline %>%
+<<<<<<< HEAD
           left_join(clust, by="ID") %>%
           mutate(trend = ifelse(is.na(trend), "w/o enough data", trend))
+=======
+      left_join(clust, by="ID") %>%
+        mutate(trend = ifelse(is.na(trend), "w/o enough data", trend))
+>>>>>>> 3516fc066dcbb03352751a62079ae2a58f642b53
   )
   }
   })
 
+<<<<<<< HEAD
 # make color palette reactive for each map. change back to map_out if need
   
   ##* See if color palette or RiverColor Value can be dw Hexcode!
+=======
+# make color palette reactive for each map. change back to map_out if neeed
+>>>>>>> 3516fc066dcbb03352751a62079ae2a58f642b53
 pal <- reactive({
 
   x <- input$mapInput
@@ -269,8 +292,11 @@ pal <- reactive({
                                  "Map data:", map_out()$trend, "<br>",
                                  "Reach ID:", map_out()$ID, "<br>",
                                  "Stream Order:", map_out()$StrmOrd))  %>%
+<<<<<<< HEAD
       
       ##* Add the Lakes Polygons here
+=======
+>>>>>>> 3516fc066dcbb03352751a62079ae2a58f642b53
                   
        addLegend("bottomleft", pal=pal(), values = ~trend, title="", opacity = 1)
   })

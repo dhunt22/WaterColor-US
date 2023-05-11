@@ -38,12 +38,20 @@ When you click the **Knit** button a document will be generated that includes bo
 flag_reaches <- read_csv("in/flagged_reaches.csv")
 
 # load summary data
+<<<<<<< HEAD
 # hex <- read_csv("D:/Dropbox/projects/rivercolor/out/modal_hex_color.csv")
+=======
+hex <- read_csv("D:/Dropbox/projects/rivercolor/out/modal_hex_color.csv")
+>>>>>>> 3516fc066dcbb03352751a62079ae2a58f642b53
 
 sum_ID <- read_feather("in/sr_sum_ID.feather") %>%
   select(ID, dw_mode1, dw_mean, dw_sd, count) %>%
   dplyr::filter(!ID %in% flag_reaches$ID) %>%
+<<<<<<< HEAD
   # left_join(hex, by="ID") %>%
+=======
+  left_join(hex, by="ID") %>%
+>>>>>>> 3516fc066dcbb03352751a62079ae2a58f642b53
   mutate_at(vars(ID, dw_mode1, dw_mean, count), ~as.integer(.))
 
 # load flowline
@@ -51,10 +59,16 @@ flowline <- st_read('in/nhd_grwl_collapse_20191002.shp') %>%
   select(ID, GNIS_NA, COMID, LENGTHKM_, StrmOrd, LvlPthI, TermnlP,TtDASKM, Tidal, 
          QE_MA, SurfAre, WBArTyp, geometry) %>%
   st_transform(2163) %>%
+<<<<<<< HEAD
   st_simplify(dTolerance = 100000) %>%
   st_transform(4326) %>%
   mutate_at(vars(StrmOrd, LvlPthI, Tidal), ~as.integer(.)) %>%
   st_cast("LINESTRING")
+=======
+  st_simplify(dTolerance = 10000) %>%
+  st_transform(4326) %>%
+  mutate_at(vars(StrmOrd, LvlPthI, Tidal), ~as.integer(.))
+>>>>>>> 3516fc066dcbb03352751a62079ae2a58f642b53
 
 #
 trend_annual <- read_feather("in/trends_annual_all.feather") %>%
@@ -64,9 +78,15 @@ trend_annual <- read_feather("in/trends_annual_all.feather") %>%
   mutate(trend = ifelse(trend=="none" & (dw_sd/dw_mean) <=0.01, "steady", trend )) %>%
   mutate(trend = ifelse(trend=="none" & (dw_sd/dw_mean) >0.01, "variable", trend )) %>%
   mutate(trend = case_when(
+<<<<<<< HEAD
     trend == "decrease" ~ "Blue-shifted",
     trend == "increase" ~ "Red-shifted",
     trend == "steady" ~ "Steady",
+=======
+    trend == "decrease" ~"Blue-shifted",
+    trend == "increase" ~ "Red-shifted",
+    trend == "steady" ~"Steady",
+>>>>>>> 3516fc066dcbb03352751a62079ae2a58f642b53
     trend == "variable" ~ "Variable"
   )) %>% 
   dplyr::filter(!ID %in% flag_reaches$ID) %>%
@@ -106,6 +126,7 @@ sum_ID_month <-read_feather("in/sr_sum_ID_month.feather") %>%
   mutate_at(vars(ID, month, dw_mean), ~as.integer(.))
 
 
+<<<<<<< HEAD
 ## Output data included. Hex obtainable from sum_shiny.rds
 
 # saveRDS(flowline, "D:/Dropbox/projects/RiverColorShiny/out/flowline_shiny2.rds")
@@ -119,6 +140,19 @@ sum_ID_month <-read_feather("in/sr_sum_ID_month.feather") %>%
 # saveRDS(sum_ID_month, "D:/Dropbox/projects/RiverColorShiny/out/sum_month_shiny.rds")
 
 # saveRDS(clust, "D:/Dropbox/projects/RiverColorShiny/out/clust_shiny.rds")
+=======
+saveRDS(flowline, "D:/Dropbox/projects/RiverColorShiny/out/flowline_shiny.rds")
+
+saveRDS(trend_annual, "D:/Dropbox/projects/RiverColorShiny/out/trend_shiny.rds")
+
+saveRDS(sum_ID, "D:/Dropbox/projects/RiverColorShiny/out/sum_shiny.rds")
+
+saveRDS(sum_ID_year, "D:/Dropbox/projects/RiverColorShiny/out/sum_year_shiny.rds")
+
+saveRDS(sum_ID_month, "D:/Dropbox/projects/RiverColorShiny/out/sum_month_shiny.rds")
+
+saveRDS(clust, "D:/Dropbox/projects/RiverColorShiny/out/clust_shiny.rds")
+>>>>>>> 3516fc066dcbb03352751a62079ae2a58f642b53
 
 
 
