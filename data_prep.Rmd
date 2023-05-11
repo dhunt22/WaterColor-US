@@ -1,0 +1,126 @@
+---
+title: "data_prep"
+author: "John Gardner"
+date: "November 11, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(stringr)
+library(tidyverse)
+library(feather)
+library(viridis)
+library(sf)
+library(rgdal)
+library(maps)
+library(magrittr)
+library(tmap)
+library(readr)
+library(lubridate)
+library(mapview)
+library(ggthemes)
+library(leaflet)
+library(tidyr)
+library(leafpop)
+library(USAboundaries)
+library(scales)
+library(USAboundaries)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+flag_reaches <- read_csv("in/flagged_reaches.csv")
+
+# load summary data
+# hex <- read_csv("D:/Dropbox/projects/rivercolor/out/modal_hex_color.csv")
+
+sum_ID <- read_feather("in/sr_sum_ID.feather") %>%
+  select(ID, dw_mode1, dw_mean, dw_sd, count) %>%
+  dplyr::filter(!ID %in% flag_reaches$ID) %>%
+  # left_join(hex, by="ID") %>%
+  mutate_at(vars(ID, dw_mode1, dw_mean, count), ~as.integer(.))
+
+# load flowline
+flowline <- st_read('in/nhd_grwl_collapse_20191002.shp') %>%
+  select(ID, GNIS_NA, COMID, LENGTHKM_, StrmOrd, LvlPthI, TermnlP,TtDASKM, Tidal, 
+         QE_MA, SurfAre, WBArTyp, geometry) %>%
+  st_transform(2163) %>%
+  st_simplify(dTolerance = 100000) %>%
+  st_transform(4326) %>%
+  mutate_at(vars(StrmOrd, LvlPthI, Tidal), ~as.integer(.)) %>%
+  st_cast("LINESTRING")
+
+#
+trend_annual <- read_feather("in/trends_annual_all.feather") %>%
+  filter(variable=="dw_mean") %>%
+  select(ID, sen, trend ) %>%
+  inner_join(sum_ID, by="ID") %>%
+  mutate(trend = ifelse(trend=="none" & (dw_sd/dw_mean) <=0.01, "steady", trend )) %>%
+  mutate(trend = ifelse(trend=="none" & (dw_sd/dw_mean) >0.01, "variable", trend )) %>%
+  mutate(trend = case_when(
+    trend == "decrease" ~ "Blue-shifted",
+    trend == "increase" ~ "Red-shifted",
+    trend == "steady" ~ "Steady",
+    trend == "variable" ~ "Variable"
+  )) %>% 
+  dplyr::filter(!ID %in% flag_reaches$ID) %>%
+  mutate(trend = ifelse(is.na(trend), "w/o enough data", trend)) %>%
+  select(ID, trend) %>%
+  mutate_at(vars(ID), ~as.integer(.))
+
+
+# load annual means for trends
+sum_ID_year <- read_feather("in/sr_sum_ID_year.feather") %>%
+  select(ID, year, dw_mean) %>%
+  left_join(trend_annual %>%
+              select(ID, trend), by="ID") %>%
+  filter(year >1984 & year <2019) %>%
+  dplyr::filter(!ID %in% flag_reaches$ID) %>%
+  mutate(trend = ifelse(is.na(trend), "w/o enough data", trend)) %>%
+  mutate_at(vars(ID, year, dw_mean), ~as.integer(.))
+
+
+# load cluster membership for reaches
+clust <- read_csv("in/seasonal_cluster_3.csv") %>%
+  mutate(trend = case_when(
+  cluster_3 == 1 ~ "Summer red-shift",
+  cluster_3 == 2 ~ "Spring red-shift",
+  cluster_3 == 3 ~ "Aseasonal",
+  is.na(cluster_3) ~ "w/o enough data")) %>%
+  dplyr::filter(!ID %in% flag_reaches$ID) %>%
+  select(-cluster_3) %>%
+  mutate_at(vars(ID), ~as.integer(.))
+
+
+sum_ID_month <-read_feather("in/sr_sum_ID_month.feather") %>%
+  select(ID, month, dw_mean, dw_sd) %>%
+  left_join(clust, by="ID") %>%
+  dplyr::filter(!ID %in% flag_reaches$ID) %>%
+  mutate(trend = ifelse(is.na(trend), "w/o enough data", trend)) %>%
+  mutate_at(vars(ID, month, dw_mean), ~as.integer(.))
+
+
+## Output data included. Hex obtainable from sum_shiny.rds
+
+# saveRDS(flowline, "D:/Dropbox/projects/RiverColorShiny/out/flowline_shiny2.rds")
+
+# saveRDS(trend_annual, "D:/Dropbox/projects/RiverColorShiny/out/trend_shiny.rds")
+
+# saveRDS(sum_ID, "D:/Dropbox/projects/RiverColorShiny/out/sum_shiny.rds")
+
+# saveRDS(sum_ID_year, "D:/Dropbox/projects/RiverColorShiny/out/sum_year_shiny.rds")
+
+# saveRDS(sum_ID_month, "D:/Dropbox/projects/RiverColorShiny/out/sum_month_shiny.rds")
+
+# saveRDS(clust, "D:/Dropbox/projects/RiverColorShiny/out/clust_shiny.rds")
+
+
+
+```
+
